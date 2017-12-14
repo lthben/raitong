@@ -1,35 +1,106 @@
+#include "Adafruit_FONA.h"
 #include <SoftwareSerial.h>
-SoftwareSerial mySerial(2, 3); // RX, TX
+SoftwareSerial fonaSS(10, 11); // RX, TX
+SoftwareSerial *fonaSerial = &fonaSS;
+
+#define FONA_RST 5
+
+Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
+
+//button switch
+const int buttonPin = 7; //the other button pin is connected to ground
+int buttonReading, buttonState;
+int lastButtonState = HIGH; //HIGH by default
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 5000;
+int ledState = LOW;
+const int ledPin = 13; //the LED on board the Arduino
+
+//fona sms
+char replybuffer[255]; 
+uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout = 0); 
+char fonaNotificationBuffer[64];          //for notifications from the FONA
+char smsBuffer[250]; //to store the received sms message content
+char replyMsg[128]; //to store the reply message to send
+
+//SD card
+#include <SPI.h>
+#include <SD.h>
+const int chipSelect = 4;
+const unsigned int logInterval = 5000;//max of 65000, the interval in ms between logging of GPS data
+unsigned long lastLoggedTime;
 
 void setup()
 {
-  // Open serial communications to computer
-  Serial.begin(115200);
+  setup_button();
 
-  mySerial.begin(115200); // Default for the board
-  mySerial.println("AT+IPR=57600");  // Set baud to 57600
+  // Open serial communications to computer
+  Serial.begin(9600);
+
+  fonaSS.begin(9600); // Reconnect at lower baud, 115200 had issues with SoftwareSerial
+  fonaSerial->begin(9600);
+
+  fonaSS.println(F("AT+IPR=9600"));  // Set baud to 9600
   delay(100); // Let the command run
-  mySerial.begin(57600); // Reconnect at lower baud, 115200 had issues with SoftwareSerial
-  
-  //Clear out any waiting serial data
-  while (mySerial.available())
-  {
-    mySerial.read();
+
+  if (! fona.begin(*fonaSerial)) {
+    Serial.println(F("Couldn't find FONA"));
+    while (1);
   }
-  mySerial.println("AT");
+  Serial.println(F("FONA is OK"));
+
+  //Clear out any waiting serial data
+  while (fonaSS.available())
+  {
+    fonaSS.read();
+  }
+
+  Serial.println(F("Raitong system activated."));
+  //  fonaSS.println("AT+CMGSO=\"97974063\",\"Raitong system activated\"");
+  delay(100);
+  fonaSS.println(F("AT+CGPS?"));
+  delay(100);
+  fonaSS.println(F("AT+CGPS=1"));
+  delay(100);
+  fonaSS.println(F("AT+CTZU=1"));
+  Serial.println(F("Automatic time zone updating turned on"));
+  Serial.println(F("Starting GPS tracking, takes 15min to get initial fix"));
+  //    fonaSS.println("AT+CGPS=1,1");//starts GPS
+
+  delay(100);
+
+  fonaSerial->print(F("AT+CNMI=2,1\r\n"));  //set up the FONA to send a +CMTI notification when an SMS is received
+
+  fonaSS.println(F("AT"));
+  Serial.println(F("FONA ready"));
+
+  setup_SDcard();
 }
 
 void loop()
 {
-  /*
-   * This loop just takes whatever comes in from the console and sends it to the board
-   */
+  //  button_operation(); //test whether tact button pressed
+
+  //  run_serial_ports();
+
+  run_sms_system();   
+
+  log_data();
+}
+
+void run_serial_ports() {
+  //This loop just takes whatever comes in from the console and sends it to the board
+
   if (Serial.available())
   {
-    mySerial.write(Serial.read());
+    fonaSS.write(Serial.read());
   }
-  if (mySerial.available())
+  if (fonaSS.available())
   {
-    Serial.write(mySerial.read());
+    Serial.write(fonaSS.read());
   }
 }
+
+
+
+
