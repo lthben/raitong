@@ -14,7 +14,7 @@ void log_data() {
 
     String dataString = "";
 
-    if (millis() - lastLoggedTime > logInterval) {
+    if (millis() - lastLoggedTime > LOGINTERVAL) {
 
         dataString += get_gps_reading();
         Serial.print("datastring: ");
