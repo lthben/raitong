@@ -1,4 +1,8 @@
 #include <SoftwareSerial.h>
+#include "Adafruit_FONA.h"
+
+#define FONA_RST 5
+Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
 
 //set the log interval here
 const unsigned int LOGINTERVAL = 5000;//max of 65000, the interval in ms between logging of GPS data
@@ -13,9 +17,6 @@ int ledState = LOW;
 const int ledPin = 13; //the LED on board the Arduino
 
 //fona sms
-#include "Adafruit_FONA.h"
-#define FONA_RST 5
-Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
 SoftwareSerial fonaSS(10, 11); // RX, TX
 SoftwareSerial *fonaSerial = &fonaSS;
 char replybuffer[255]; 

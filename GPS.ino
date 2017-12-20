@@ -27,7 +27,7 @@ String get_gps_reading() {
     //    Serial.print("GPS altitude:");
     //    Serial.println(altitude);
 
-    return ("date(ddmmyy):" + String(rtc_date, 0) + " UTC time(hhmmss):" + String(rtc_time, 0) + " latlon:" + String(latitude, 6) + "," + String(longitude, 6) + " speed(kph):" + String(speed_kph, 2) );
+    return ("date(ddmmyy):" + String(rtc_date, 0) + " UTC time(hhmmss):" + String(rtc_time, 0) + " latlon:" + String(latitude, 6) + "," + String(longitude, 6) + " speed(kph):" + String(2.0*speed_kph, 2) );
 
   } else {
     Serial.println(F("Waiting for FONA GPS 3D fix..."));
